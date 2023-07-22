@@ -165,7 +165,8 @@ def list_connection():
     pretty_results.field_names = ["Index", "IP Address", "Port", "User", "System", "Version"]
     for arr in results:
         pretty_results.add_row(arr)
-    print('------Clients-----' + '\n' , pretty_results)
+    print('------Clients-----')
+    print(pretty_results)
 
 
 # select a target client
@@ -179,7 +180,7 @@ def get_target(target):
         return conn
     except Exception as e:
         print(colored("Not a valid selection", "red"))
-        print(e)
+        # print(e)
         return None
 
 
@@ -201,6 +202,33 @@ def factory_input(input_string):
         result_list = re.findall(r'[^"\s]+|"(?:\\.|[^"])*"', input_string)
         result_list = [item.replace('"', '').strip() for item in result_list]
         return result_list
+    
+# is user add correct argument
+def isCorrectArgument(command):
+    command_user = command[0].lower()
+    correct_command = True
+    
+    if command_user == "upload":
+        correct_command =  len(command) == 3 
+        
+    elif command_user =="download":
+        correct_command =  len(command) == 3 
+        
+    elif command_user =="run":
+        correct_command =  len(command) == 2 
+        
+    elif command_user ==["help", "h"]:
+        correct_command =  len(command) == 1
+        
+    elif command_user == ["quit", "exist"]:
+        correct_command =  len(command) == 1 
+        
+    elif command_user == "show-script":
+        correct_command =  len(command) == 1 
+        
+    return correct_command
+        
+    
 
 # connect with remote target client
 def send_target_commands(conn):
@@ -215,6 +243,15 @@ def send_target_commands(conn):
             
             command_user = command[0].lower()
             
+            # is user add correct argument
+            if not isCorrectArgument(command):
+                print(colored("-----------Not Correct Argument !!!-----------", "red"))
+                cprint(location, "red", attrs=["bold"], end="")
+                continue
+                
+
+                
+            
             if command_user in ["help", "h"]:
                 show_list_command()
                 print(location, end="")
@@ -226,7 +263,7 @@ def send_target_commands(conn):
                 file_content = read_file(command[1])
                 command.append(file_content.decode())
                 
-            if command_user == "run":
+            if command_user == "run" :
                 files_script_dict = create_file_script()
                 path_file = files_script_dict[command[1]]
                 
@@ -270,8 +307,11 @@ def show_list_command():
 
     table.field_names = ["Command", "Description", "Example"]
     table.add_row(["help/h", "Show list of commands", "help/h"])
+    table.add_row(["quit/exit", "to exit target pc", "quit/exit"])
     table.add_row(["upload", "Send file for target PC", "upload [data.txt] [path_on_target_pc]"])
     table.add_row(["download", "Get file from target PC", "download [data.txt] [path_on_your_pc]"])
+    table.add_row(["show-script", "show all script to run on target pc", "show-script"])
+    table.add_row(["run", "run script on target pc", "run [script name]"])
 
     table.align["Command"] = "l"
     table.align["Description"] = "l"

