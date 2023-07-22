@@ -115,7 +115,7 @@ def accept_connection():
             all_connection.append(conn)
             all_address.append(address)
             print(colored(f"\n[+] Connection has been establish | IP {address[0]}", "green"))
-            print(colored("turtle> ", "blue"),end="")
+            print(colored("Twilight> ", "blue"),end="")
 
         except:
             print(colored("Error accepting connections", "red"))
@@ -123,9 +123,9 @@ def accept_connection():
 # Interacting prompt for sending commands remotely
 
 
-def start_turtle():
+def start_twilight():
     while True:
-        cmd = input(colored('turtle> ', "blue")).lower().split()
+        cmd = input(colored('Twilight> ', "blue")).lower().split()
         if not cmd:
             continue
         if cmd[0] == 'list':
@@ -176,7 +176,7 @@ def get_target(target):
         conn = all_connection[target]
         user_connect = str(all_address[target][0])
         print(colored(f"You are now connected to {user_connect}" , "green"))
-        print(colored("turtle> ","blue"), end="")
+        print(colored("Twilight> ","blue"), end="")
         return conn
     except Exception as e:
         print(colored("Not a valid selection", "red"))
@@ -336,7 +336,7 @@ def work():
             socket_bind()
             accept_connection()
         if x == 2:
-            start_turtle()
+            start_twilight()
         queue.task_done()
 
 # Each list item is a new job
