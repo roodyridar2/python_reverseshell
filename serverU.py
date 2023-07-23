@@ -218,6 +218,12 @@ def execute_command(conn, data):
     except Exception as ex:
         print(colored("Error from execute_command function", "red"))
         print(colored(ex, "yellow"))
+# clear screen
+def clear_screen():
+    if os.name == 'nt':  # For Windows
+        _ = os.system('cls')
+    else:  # For other platforms (Linux, macOS, etc.)
+        _ = os.system('clear')
 
 # remove extra space
 def factory_input(input_string):
@@ -229,9 +235,8 @@ def factory_input(input_string):
         return result_list
 
 # is user add correct argument
-def isCorrectArgument(command):
-    command_user = command[0].lower()
-    correct_command = True
+def isCorrectArgument(command_user,command):
+    correct_command = False
 
     if command_user == "upload":
         correct_command = len(command) == 3
@@ -250,6 +255,8 @@ def isCorrectArgument(command):
 
     elif command_user == "show-script":
         correct_command = len(command) == 1
+    else:
+        correct_command = True
 
     return correct_command
 
@@ -268,18 +275,23 @@ def send_target_commands(conn):
             command_user = command[0].lower()
 
             # is user add correct argument
-            if not isCorrectArgument(command):
+            if not isCorrectArgument(command_user, command):
+                
                 print(colored("-----------Not Correct Argument !!!-----------", "red"))
                 cprint(location, "red", attrs=["bold"], end="")
                 continue
 
             if command_user in ["help", "h"]:
                 show_list_command()
-                print(location, end="")
+                cprint(location, "red", attrs=["bold"], end="")
                 continue
 
             if command_user in ['quit', 'exit']:
                 break
+            if command_user in ["clear" , "clr"]:
+                clear_screen()
+                cprint(location, "red", attrs=["bold"], end="")
+                continue
             if command_user == "upload":
                 file_content = read_file(command[1])
                 command.append(file_content.decode())
